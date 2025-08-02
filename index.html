@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Code Studio</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f7fa;
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            color: white;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+
+        .developer-credit {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+
+        .features {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        body.dark-mode .features {
+            background: #2d2d2d;
+            color: #e0e0e0;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .theme-toggle:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .code-section {
+            margin-bottom: 30px;
+        }
+
+        .code-input {
+            width: 100%;
+            height: 400px;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-family: 'Courier New', Consolas, monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .code-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        body.dark-mode .code-input {
+            background: #2d2d2d;
+            color: #e0e0e0;
+            border-color: #4a5568;
+        }
+
+        body.dark-mode .code-input:focus {
+            border-color: #667eea;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 140px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:focus {
+            outline: 3px solid rgba(102, 126, 234, 0.5);
+            outline-offset: 2px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .btn-preview {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .btn-download-html {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: white;
+        }
+
+        .btn-download-pdf {
+            background: linear-gradient(135deg, #FF9800, #F57C00);
+            color: white;
+        }
+
+        .btn-reset {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .status-message.show {
+            opacity: 1;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        body.dark-mode .status-error {
+            background: #4a1e1e;
+            color: #f56565;
+            border-color: #742a2a;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .button-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            button {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .code-input {
+                height: 300px;
+            }
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            .code-input {
+                border-width: 3px;
+            }
+            
+            button {
+                border: 2px solid currentColor;
+            }
+        }
+
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            width: 95%;
+            height: 90%;
+            max-width: 1200px;
+            max-height: 800px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        body.dark-mode .modal-content {
+            background: #2d2d2d;
+        }
+
+        .modal-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .modal-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-new-tab, .btn-close {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            min-width: auto;
+            transition: all 0.3s ease;
+        }
+
+        .btn-new-tab:hover, .btn-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .preview-frame {
+            flex: 1;
+            border: none;
+            width: 100%;
+            background: white;
+        }
+
+        /* Responsive modal */
+        @media (max-width: 768px) {
+            .modal-content {
+                width: 98%;
+                height: 95%;
+                margin: 10px;
+            }
+
+            .modal-header {
+                padding: 15px;
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .modal-controls {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">🌓 Theme</button>
+    
+    <div class="container">
+        <header role="banner">
+            <h1>AR Code Studio</h1>
+            <p class="subtitle">Accessible Code Preview & Download Tool</p>
+            <div class="developer-credit">
+                Developed by S M Ripon & Ajay Thakur • Powered by Accessible Resource
+            </div>
+        </header>
+
+        <main role="main">
+            <section class="features">
+                <p>Write and preview your HTML, CSS, and JavaScript live in one place. Download your code as an HTML or PDF file with just a click. Fully accessible and usable without the internet.</p>
+            </section>
+
+            <section class="code-section">
+                <label for="codeInput" class="sr-only">Code Input Field</label>
+                <textarea 
+                    id="codeInput" 
+                    class="code-input" 
+                    aria-label="Code Input Field"
+                    placeholder="Enter your HTML, CSS, and JavaScript code here...
+Example:
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Page</title>
+    <style>
+        body { font-family: Arial; background: #f0f0f0; }
+        h1 { color: #333; text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>Hello World!</h1>
+    <script>
+        console.log('Welcome to AR Code Studio!');
+    </script>
+</body>
+</html>"
+                    autofocus
+                ></textarea>
+            </section>
+
+            <div class="button-container" role="group" aria-label="Code actions">
+                <button 
+                    class="btn-preview" 
+                    onclick="previewCode()" 
+                    aria-label="Preview your code"
+                    tabindex="0"
+                >
+                    🔍 Preview
+                </button>
+                
+                <button 
+                    class="btn-download-html" 
+                    onclick="downloadHTML()" 
+                    aria-label="Download code as HTML"
+                    tabindex="0"
+                >
+                    📄 Download HTML
+                </button>
+                
+                <button 
+                    class="btn-download-pdf" 
+                    onclick="downloadPDF()" 
+                    aria-label="Download code as PDF"
+                    tabindex="0"
+                >
+                    📋 Download PDF
+                </button>
+                
+                <button 
+                    class="btn-reset" 
+                    onclick="resetCode()" 
+                    aria-label="Clear code input"
+                    tabindex="0"
+                >
+                    🗑️ Reset
+                </button>
+            </div>
+
+            <div id="statusMessage" class="status-message" role="status" aria-live="polite"></div>
+        </main>
+    </div>
+
+    <script>
+        // Global variables
+        let fileCounter = 1;
+        let isDarkMode = false;
+
+        // Voice feedback function
+        function speakFeedback(message) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(message);
+                utterance.rate = 0.8;
+                utterance.volume = 0.7;
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Show status message
+        function showStatus(message, type = 'success') {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.textContent = message;
+            statusEl.className = `status-message status-${type} show`;
+            
+            setTimeout(() => {
+                statusEl.classList.remove('show');
+            }, 3000);
+        }
+
+        // Preview code function
+        function previewCode() {
+            const code = document.getElementById('codeInput').value.trim();
+            
+            if (!code) {
+                speakFeedback('Please enter some code first.');
+                showStatus('Please enter some code to preview.', 'error');
+                return;
+            }
+
+            // Check if preview modal already exists
+            let existingModal = document.getElementById('previewModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            // Create modal for preview
+            const modal = document.createElement('div');
+            modal.id = 'previewModal';
+            modal.innerHTML = `
+                <div class="modal-overlay" onclick="closePreview()">
+                    <div class="modal-content" onclick="event.stopPropagation()">
+                        <div class="modal-header">
+                            <h3>Live Preview</h3>
+                            <div class="modal-controls">
+                                <button onclick="openInNewTab()" class="btn-new-tab" aria-label="Open in new tab">↗️ New Tab</button>
+                                <button onclick="closePreview()" class="btn-close" aria-label="Close preview">✕</button>
+                            </div>
+                        </div>
+                        <iframe id="previewFrame" class="preview-frame" sandbox="allow-scripts allow-same-origin"></iframe>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // Set iframe content
+            const iframe = document.getElementById('previewFrame');
+            const blob = new Blob([code], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            iframe.src = url;
+
+            // Store current code for new tab function
+            window.currentPreviewCode = code;
+            window.currentBlobUrl = url;
+
+            speakFeedback('Live preview opened.');
+            showStatus('Live preview opened in modal window.');
+
+            // Focus on close button for accessibility
+            setTimeout(() => {
+                document.querySelector('.btn-close').focus();
+            }, 100);
+        }
+
+        // Close preview modal
+        function closePreview() {
+            const modal = document.getElementById('previewModal');
+            if (modal) {
+                modal.remove();
+            }
+            if (window.currentBlobUrl) {
+                URL.revokeObjectURL(window.currentBlobUrl);
+                window.currentBlobUrl = null;
+            }
+            speakFeedback('Preview closed.');
+            // Return focus to preview button
+            document.querySelector('.btn-preview').focus();
+        }
+
+        // Open preview in new tab (fallback)
+        function openInNewTab() {
+            if (window.currentPreviewCode) {
+                try {
+                    const newWindow = window.open('');
+                    if (newWindow) {
+                        newWindow.document.write(window.currentPreviewCode);
+                        newWindow.document.close();
+                        speakFeedback('Preview opened in new tab.');
+                        showStatus('Preview opened in new tab.');
+                    } else {
+                        // Create a downloadable HTML file as ultimate fallback
+                        const blob = new Blob([window.currentPreviewCode], { type: 'text/html' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'preview.html';
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        speakFeedback('Preview downloaded as HTML file.');
+                        showStatus('Preview downloaded as HTML file.');
+                    }
+                } catch (error) {
+                    speakFeedback('Unable to open in new tab.');
+                    showStatus('Unable to open in new tab. Using modal preview.', 'error');
+                }
+            }
+        }
+
+        // Download HTML function
+        function downloadHTML() {
+            const code = document.getElementById('codeInput').value.trim();
+            
+            if (!code) {
+                speakFeedback('Please enter some code first.');
+                showStatus('Please enter some code to download.', 'error');
+                return;
+            }
+
+            try {
+                const blob = new Blob([code], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `AR_Code_Studio_${fileCounter}.html`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                speakFeedback('Your HTML file has been downloaded.');
+                showStatus(`HTML file downloaded: AR_Code_Studio_${fileCounter}.html`);
+                fileCounter++;
+            } catch (error) {
+                speakFeedback('Error downloading HTML file.');
+                showStatus('Error downloading HTML file.', 'error');
+            }
+        }
+
+        // Download PDF function
+        function downloadPDF() {
+            const code = document.getElementById('codeInput').value.trim();
+            
+            if (!code) {
+                speakFeedback('Please enter some code first.');
+                showStatus('Please enter some code to download.', 'error');
+                return;
+            }
+
+            try {
+                // Show loading state
+                const button = event.target;
+                const originalText = button.innerHTML;
+                button.innerHTML = '<span class="loading"></span> Generating PDF...';
+                button.disabled = true;
+
+                // Create a temporary div with the code content
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = `<pre style="font-family: monospace; white-space: pre-wrap; word-wrap: break-word; font-size: 12px; line-height: 1.4; padding: 20px;">${code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>`;
+                tempDiv.style.position = 'absolute';
+                tempDiv.style.left = '-9999px';
+                document.body.appendChild(tempDiv);
+
+                const opt = {
+                    margin: 1,
+                    filename: `AR_Code_Studio_${fileCounter}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2 },
+                    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+                };
+
+                html2pdf().set(opt).from(tempDiv).save().then(() => {
+                    document.body.removeChild(tempDiv);
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    
+                    speakFeedback('Your PDF file has been downloaded.');
+                    showStatus(`PDF file downloaded: AR_Code_Studio_${fileCounter}.pdf`);
+                    fileCounter++;
+                }).catch((error) => {
+                    document.body.removeChild(tempDiv);
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    
+                    speakFeedback('Error downloading PDF file.');
+                    showStatus('Error downloading PDF file.', 'error');
+                });
+            } catch (error) {
+                speakFeedback('Error downloading PDF file.');
+                showStatus('Error downloading PDF file.', 'error');
+            }
+        }
+
+        // Reset code function
+        function resetCode() {
+            if (confirm('Are you sure you want to clear all code?')) {
+                document.getElementById('codeInput').value = '';
+                speakFeedback('Code input cleared.');
+                showStatus('Code input has been cleared.');
+                document.getElementById('codeInput').focus();
+            }
+        }
+
+        // Theme toggle function
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            document.body.classList.toggle('dark-mode', isDarkMode);
+            speakFeedback(isDarkMode ? 'Dark mode enabled.' : 'Light mode enabled.');
+            showStatus(isDarkMode ? 'Switched to dark mode.' : 'Switched to light mode.');
+        }
+
+        // Keyboard navigation support
+        document.addEventListener('keydown', function(event) {
+            // Ctrl+Enter to preview
+            if (event.ctrlKey && event.key === 'Enter') {
+                event.preventDefault();
+                previewCode();
+            }
+            
+            // Ctrl+S to download HTML
+            if (event.ctrlKey && event.key === 's') {
+                event.preventDefault();
+                downloadHTML();
+            }
+            
+            // Ctrl+P to download PDF
+            if (event.ctrlKey && event.key === 'p') {
+                event.preventDefault();
+                downloadPDF();
+            }
+        });
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Focus on textarea when page loads
+            document.getElementById('codeInput').focus();
+            
+            // Welcome message
+            speakFeedback('Welcome to AR Code Studio. Code input field is ready.');
+            showStatus('Welcome to AR Code Studio! Start typing your code.');
+        });
+
+        // Accessibility: Announce keyboard shortcuts
+        function announceShortcuts() {
+            const shortcuts = 'Keyboard shortcuts: Control Enter for preview, Control S for HTML download, Control P for PDF download.';
+            speakFeedback(shortcuts);
+            showStatus('Check console or use voice feedback for keyboard shortcuts.');
+        }
+
+        // Add keyboard shortcut info (optional)
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'F1') {
+                event.preventDefault();
+                announceShortcuts();
+            }
+        });
+    </script>
+</body>
+</html>
